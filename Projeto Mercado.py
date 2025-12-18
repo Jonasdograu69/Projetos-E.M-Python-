@@ -1,109 +1,166 @@
 from collections import Counter
 
-carrinho = []
-catalogo = {}   
-
 senha_adm = "4321"
 senha_cliente = "1234"
+
+
+def mostrar_catalogo(catalogo):
+    if not catalogo:
+        print("Catálogo vazio.")
+        return {}
+
+    print("\nCatálogo:")
+    mapa = {}
+    for i, (produto, dados) in enumerate(catalogo.items(), start=1):
+        print(f"{i} - {produto} ({dados['qtd']}x) - R${dados['preco']:.2f}")
+        mapa[i] = produto
+
+    return mapa
+
+
+def adicionar_produto(carrinho, catalogo):
+    mapa = mostrar_catalogo(catalogo)
+    if not mapa:
+        return
+
+    try:
+        escolha = int(input("\nDigite o número do produto: "))
+        if escolha not in mapa:
+            print("Produto inválido.")
+            return
+
+        quantidade = int(input("Digite a quantidade desejada: "))
+        if quantidade <= 0:
+            print("Quantidade inválida.")
+            return
+
+    except ValueError:
+        print("Entrada inválida.")
+        return
+
+    produto = mapa[escolha]
+
+    if catalogo[produto]["qtd"] < quantidade:
+        print("Estoque insuficiente.")
+        return
+
+    for _ in range(quantidade):
+        carrinho.append(produto)
+
+    catalogo[produto]["qtd"] -= quantidade
+    print(f"{quantidade}x {produto} adicionado(s) ao carrinho!")
+
+
+def mostrar_carrinho(carrinho):
+    if not carrinho:
+        print("Carrinho vazio.")
+        return
+
+    contagem = Counter(carrinho)
+    print("\nCarrinho:")
+    for produto, qtd in contagem.items():
+        print(f"{qtd}x {produto}")
+
+
+def finalizar_compra(carrinho, catalogo):
+    if not carrinho:
+        print("Carrinho vazio, não há compra para finalizar.")
+        return
+
+    contagem = Counter(carrinho)
+    total = 0
+
+    print("\n---- RESUMO DA COMPRA ----")
+    for produto, qtd in contagem.items():
+        preco_unit = catalogo[produto]["preco"]
+        subtotal = preco_unit * qtd
+        total += subtotal
+        print(f"{qtd}x {produto} — R${preco_unit:.2f} — Subtotal: R${subtotal:.2f}")
+
+    print(f"\nTOTAL: R${total:.2f}")
+    print("Compra finalizada!")
+
+    carrinho.clear()
+
+
+def adicionar_catalogo(catalogo):
+    produto = input("Nome do produto:\n").strip()
+    if not produto:
+        print("Produto inválido.")
+        return
+
+    try:
+        quantidade = int(input("Quantidade a adicionar:\n"))
+        preco = float(input("Preço do produto:\n"))
+    except ValueError:
+        print("Entrada inválida.")
+        return
+
+    if produto in catalogo:
+        catalogo[produto]["qtd"] += quantidade
+        print("Produto já existia. Quantidade atualizada.")
+    else:
+        catalogo[produto] = {"qtd": quantidade, "preco": preco}
+        print("Produto adicionado ao catálogo.")
+
+    print(f'Estoque atual de "{produto}": {catalogo[produto]["qtd"]}')
+
+
+carrinho = []
+catalogo = {}
 
 while True:
     login = input("Senha: ")
 
-    
     if login == senha_cliente:
         while True:
-            print("\n")
+            try:
+                escolha = int(input("""
+========================
+MENU DO CLIENTE
+1 - Adicionar produto ao carrinho
+2 - Ver carrinho
+3 - Finalizar compra
+0 - Sair
+========================
+Escolha: """))
+            except ValueError:
+                print("Opção inválida.")
+                continue
 
-            if carrinho:
-                contagem = Counter(carrinho)
-                print("Carrinho:")
-                for produto, qtd in contagem.items():
-                    print(f"{qtd}x {produto}")
-            else:
-                print("Carrinho vazio.")
-
-            if catalogo:
-                print("\nCatálogo atual:")
-                for produto, dados in catalogo.items():
-                    print(f'{dados["qtd"]}x {produto} — R${dados["preco"]:.2f}')
-            else:
-                print("\nCatálogo vazio.")
-
-            add = input('\nDigite o produto para adicionar ao carrinho. '
-                        'Para sair, digite "sair". '
-                        'Para finalizar a compra, digite (F):\n').lower()
-
-            if add == "sair":
-                print("A suas ordens")
+            if escolha == 0:
                 break
-
-           
-            if add == "f":
-                if not carrinho:
-                    print("Carrinho vazio, não há compra para finalizar.")
-                    continue
-
-                total = 0
-                contagem = Counter(carrinho)
-
-                print("\n---- RESUMO DA COMPRA ----")
-                for produto, qtd in contagem.items():
-                    preco_unit = catalogo[produto]["preco"]
-                    subtotal = preco_unit * qtd
-                    total += subtotal
-                    print(f"{qtd}x {produto} — R${preco_unit:.2f} cada — Subtotal: R${subtotal:.2f}")
-
-                print(f"\nTOTAL: R${total:.2f}")
-                print("Compra finalizada!")
-
-                carrinho.clear()
-                break
-
-           
-            if add not in catalogo:
-                print("Produto inexistente no catálogo")
-
-            elif catalogo[add]["qtd"] == 0:
-                print("Produto sem estoque")
-
+            elif escolha == 1:
+                adicionar_produto(carrinho, catalogo)
+            elif escolha == 2:
+                mostrar_carrinho(carrinho)
+            elif escolha == 3:
+                finalizar_compra(carrinho, catalogo)
             else:
-                carrinho.append(add)
-                catalogo[add]["qtd"] -= 1
-                print(f"{add} adicionado ao carrinho!")
+                print("Opção inválida.")
 
-    
     elif login == senha_adm:
-        print("Bem vindo, ADM!")
+        print("Bem-vindo, ADM!")
 
         while True:
-            decisao_adm = input(
-                'Digite (C) para cadastrar produto ao catálogo ou "sair" para encerrar:\n'
-            ).lower()
+            try:
+                decisao_adm = int(input("""
+========================
+MENU DO ADM
+1 - Adicionar produto ao catálogo
+0 - Sair
+========================
+Escolha: """))
+            except ValueError:
+                print("Opção inválida.")
+                continue
 
-            if decisao_adm == "sair":
-                print("A suas ordens!")
+            if decisao_adm == 0:
                 break
+            elif decisao_adm == 1:
+                adicionar_catalogo(catalogo)
+            else:
+                print("Opção inválida.")
 
-            elif decisao_adm == "c":
-                produto = input("Nome do produto:\n").strip()
-
-                if produto == "":
-                    print("Produto inválido.")
-                    continue
-
-                quantidade = int(input("Quantidade a adicionar:\n"))
-                preco = float(input("Preço do produto:\n"))
-
-                if produto in catalogo:
-                    catalogo[produto]["qtd"] += quantidade
-                    print("Produto já existia. Quantidade atualizada.")
-                
-                else:
-                    catalogo[produto] = {"qtd": quantidade, "preco": preco}
-                    print("Produto adicionado ao catálogo.")
-
-                print(f'Estoque atual de "{produto}": {catalogo[produto]["qtd"]}')
-
-    
     else:
         print("Senha inválida.")
